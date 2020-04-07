@@ -33,7 +33,16 @@ class DataTransformator:
                 self.dataset[feature] = self.dataset[feature].astype('category')
                 self.dataset[feature] = self.dataset[feature].cat.codes
             else:
-                self.dataset[feature].fillna(self.dataset[feature].median(), inplace=True)
+                self.dataset[feature].fillna(self.dataset[feature].mean(), inplace=True)
+
+        self.dataset.drop('LotShape', inplace=True, axis=1)
+
+    def data_eng(self):
+        # YearRemodAdd and YearBuilt
+        self.dataset['Remodeled'] = self.dataset['YearRemodAdd'] - self.dataset['YearBuilt']
+        self.dataset['Remodeled'] = self.dataset['Remodeled'].apply(lambda x: 1 if x > 0 else 0)
+        self.dataset.drop('YearRemodAdd', inplace=True, axis=1)
+        self.dataset.drop('YearBuilt', inplace=True, axis=1)
 
 
 # Load training data
@@ -42,6 +51,7 @@ target = 'SalePrice'
 
 d_train = DataTransformator(train_data)
 d_train.data_trans()
+d_train.data_eng()
 
 # Split training set
 X_train, X_test, y_train, y_test = train_test_split(d_train.dataset, d_train.dataset[target], random_state=np.random)
@@ -53,10 +63,12 @@ X_train.drop(target, axis=1, inplace=True)
 X_test.drop(target, axis=1, inplace=True)
 model.fit(X_train, y_train)
 score = model.score(X_test, y_test)
+print("Score: {}".format(score))
 
 test_data = pandas.read_csv('data/test.csv')
 d_test = DataTransformator(test_data)
 d_test.data_trans()
+d_test.data_eng()
 
 preds = model.predict(d_test.dataset)
 
