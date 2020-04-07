@@ -57,26 +57,28 @@ d_train.data_eng()
 # Split training set
 X_train, X_test, y_train, y_test = train_test_split(d_train.dataset, d_train.dataset[target], random_state=np.random)
 
-model = GradientBoostingRegressor(learning_rate=0.1,
-                                  max_depth=6,
-                                  max_features=0.3,
-                                  min_samples_leaf=3,
-                                  n_estimators=100)
+# model = GradientBoostingRegressor(learning_rate=0.1,
+#                                   max_depth=6,
+#                                   max_features=0.3,
+#                                   min_samples_leaf=3,
+#                                   n_estimators=100)
 X_train.drop(target, axis=1, inplace=True)
 X_test.drop(target, axis=1, inplace=True)
 
-param_grid = {'n_estimators': [100],
-              'learning_rate': [0.1, 0.05, 0.02, 0.01],
-              'max_depth': [4, 6],
-              'min_samples_leaf': [3, 5, 9, 17],
-              'max_features': [1.0, 0.3]
-              }
+# param_grid = {'n_estimators': [10, 30, 60, 100, 150],
+#               'learning_rate': [0.1, 0.05, 0.02, 0.01],
+#               'max_depth': [2, 4, 6, 8, 10],
+#               'min_samples_leaf': [3, 5, 9, 17],
+#               'max_features': [1.0, 0.3, 0.7]
+#               }
 
 # grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=3, n_jobs=-1)
 # grid_search.fit(X_train, y_train)
 # print("Best params: {}".format(grid_search.best_params_))
-# Best params: {'learning_rate': 0.1, 'max_depth': 6, 'max_features': 0.3, 'min_samples_leaf': 3, 'n_estimators': 100}
+# Best params: {'learning_rate': 0.1, 'max_depth': 4, 'max_features': 0.3, 'min_samples_leaf': 9, 'n_estimators': 100}
 
+best_params = {'learning_rate': 0.1, 'max_depth': 4, 'max_features': 0.3, 'min_samples_leaf': 9, 'n_estimators': 100}
+model = GradientBoostingRegressor(**best_params)
 model.fit(X_train, y_train)
 score = model.score(X_test, y_test)
 print("Score: {}".format(score))
