@@ -34,7 +34,7 @@ class DataTransformator:
                 self.dataset[feature] = self.dataset[feature].astype('category')
                 self.dataset[feature] = self.dataset[feature].cat.codes
             else:
-                self.dataset[feature].fillna(self.dataset[feature].mean(), inplace=True)
+                self.dataset[feature].fillna(self.dataset[feature].median(), inplace=True)
 
         self.dataset.drop('LotShape', inplace=True, axis=1)
 
