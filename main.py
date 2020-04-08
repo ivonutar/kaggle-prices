@@ -4,7 +4,24 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.model_selection import train_test_split, RandomizedSearchCV, GridSearchCV
 
 
+pandas.set_option('display.max_rows', None)
+pandas.set_option('display.max_columns', None)
+pandas.set_option('display.width', None)
+pandas.set_option('display.max_colwidth', -1)
+
+
 class DataTransformator:
+
+    outliers = ['LotFrontage',
+                'LotArea',
+                'MasVnrArea',
+                'BsmtFinSF1',
+                'BsmtFinSF2',
+                'TotalBsmtSF',
+                '1stFlrSF',
+                'LowQualFinSF',
+                'GrLivArea',
+                'OpenPorchSF']
 
     def __init__(self, dataset):
         self.dataset = dataset
@@ -44,6 +61,12 @@ class DataTransformator:
         self.dataset['Remodeled'] = self.dataset['Remodeled'].apply(lambda x: 1 if x > 0 else 0)
         self.dataset.drop('YearRemodAdd', inplace=True, axis=1)
         self.dataset.drop('YearBuilt', inplace=True, axis=1)
+
+        # for feature in self.outliers:
+        #     col = self.dataset[feature]
+        #     col = col[col.between(col.quantile(.15), col.quantile(.85))]
+        #     self.dataset[feature] = col
+        #     self.dataset[feature].fillna(self.dataset[feature].median(), inplace=True)
 
 
 # Load training data
