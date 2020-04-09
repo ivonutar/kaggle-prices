@@ -1,8 +1,11 @@
 import pandas
 import numpy as np
+from xgboost import XGBRegressor
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.model_selection import train_test_split, RandomizedSearchCV, GridSearchCV
-
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OneHotEncoder
 
 pandas.set_option('display.max_rows', None)
 pandas.set_option('display.max_columns', None)
@@ -11,7 +14,6 @@ pandas.set_option('display.max_colwidth', -1)
 
 
 class DataTransformator:
-
     outliers = ['LotFrontage',
                 'LotArea',
                 'MasVnrArea',
@@ -23,15 +25,23 @@ class DataTransformator:
                 'GrLivArea',
                 'OpenPorchSF']
 
+    low_corr = [
+        'MoSold',
+        '3SsnPorch',
+        'BsmtFinSF2',
+        'BsmtHalfBath',
+        'LowQualFinSF',
+        'YrSold'
+    ]
+
     def __init__(self, dataset):
         self.dataset = dataset
 
     def data_trans(self):
         # Too many NaNs
-        self.dataset['Alley'].fillna('NotAvailable', inplace=True)  # ['Grvl' 'Pave']
-        self.dataset['PoolQC'].fillna('NotAvailable', inplace=True)  # ['Ex' 'Fa' 'Gd']
-        self.dataset['Fence'].fillna('NotAvailable', inplace=True)  # ['MnPrv' 'GdWo' 'GdPrv' 'MnWw']
-        self.dataset['MiscFeature'].fillna('NotAvailable', inplace=True)  # ['Shed' 'Gar2' 'Othr' 'TenC']
+        # Low cardinality, use OneHot
+        for feature in ['Alley', 'PoolQC', 'Fence', 'MiscFeature']:
+            self.dataset[feature].fillna('NotAvailable', inplace=True)
 
         # Numbers
         for feature in ['LotFrontage', 'MasVnrArea', 'GarageYrBlt']:
@@ -51,16 +61,20 @@ class DataTransformator:
                 self.dataset[feature] = self.dataset[feature].astype('category')
                 self.dataset[feature] = self.dataset[feature].cat.codes
             else:
-                self.dataset[feature].fillna(self.dataset[feature].median(), inplace=True)
+                if feature == 'GarageYtBlt':
+                    self.dataset[feature].fillna(self.dataset[feature].min(), inplace=True)
+                else:
+                    self.dataset[feature].fillna(self.dataset[feature].median(), inplace=True)
 
         self.dataset.drop('LotShape', inplace=True, axis=1)
 
     def data_eng(self):
+        pass
         # YearRemodAdd and YearBuilt
-        self.dataset['Remodeled'] = self.dataset['YearRemodAdd'] - self.dataset['YearBuilt']
-        self.dataset['Remodeled'] = self.dataset['Remodeled'].apply(lambda x: 1 if x > 0 else 0)
-        self.dataset.drop('YearRemodAdd', inplace=True, axis=1)
-        self.dataset.drop('YearBuilt', inplace=True, axis=1)
+        # self.dataset['Remodeled'] = self.dataset['YearRemodAdd'] - self.dataset['YearBuilt']
+        # self.dataset['Remodeled'] = self.dataset['Remodeled'].apply(lambda x: 1 if x > 0 else 0)
+        # self.dataset.drop('YearRemodAdd', inplace=True, axis=1)
+        # self.dataset.drop('YearBuilt', inplace=True, axis=1)
 
         # for feature in self.outliers:
         #     col = self.dataset[feature]
@@ -97,10 +111,32 @@ X_test.drop(target, axis=1, inplace=True)
 # grid_search.fit(X_train, y_train)
 # print("Best params: {}".format(grid_search.best_params_))
 # Best params: {'learning_rate': 0.1, 'max_depth': 4, 'max_features': 0.3, 'min_samples_leaf': 9, 'n_estimators': 100}
-
-best_params = {'learning_rate': 0.1, 'max_depth': 4, 'max_features': 0.3, 'min_samples_leaf': 9, 'n_estimators': 100}
-model = GradientBoostingRegressor(**best_params)
-
+#
+# best_params = {'learning_rate': 0.1, 'max_depth': 4, 'max_features': 0.3, 'min_samples_leaf': 9, 'n_estimators': 100}
+# model = GradientBoostingRegressor(**best_params)
+# model = XGBRegressor()
+# parameters = {'nthread': [4],
+#               'objective': ['reg:linear'],
+#               'learning_rate': [.03, 0.05, .07],
+#               'max_depth': [5, 6, 7],
+#               'min_child_weight': [4],
+#               'silent': [1],
+#               'subsample': [0.7],
+#               'colsample_bytree': [0.7],
+#               'n_estimators': [100, 200, 300, 400, 500]}
+# xgb_grid = GridSearchCV(model,
+#                         parameters,
+#                         cv=2,
+#                         n_jobs=4,
+#                         verbose=True)
+#
+# xgb_grid.fit(X_train,
+#              y_train)
+#
+# print(xgb_grid.best_score_)
+# print(xgb_grid.best_params_)
+best_ = {'colsample_bytree': 0.7, 'learning_rate': 0.03, 'max_depth': 5, 'min_child_weight': 4, 'n_estimators': 500, 'nthread': 4, 'objective': 'reg:linear', 'silent': 1, 'subsample': 0.7}
+model = XGBRegressor(**best_)
 # Fit and score
 model.fit(X_train, y_train)
 score = model.score(X_test, y_test)
