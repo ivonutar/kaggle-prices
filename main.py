@@ -2,7 +2,7 @@ import pandas
 import numpy as np
 from xgboost import XGBRegressor
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.model_selection import train_test_split, RandomizedSearchCV, GridSearchCV
+from sklearn.model_selection import train_test_split, RandomizedSearchCV, GridSearchCV, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder
@@ -10,7 +10,7 @@ from sklearn.preprocessing import OneHotEncoder
 pandas.set_option('display.max_rows', None)
 pandas.set_option('display.max_columns', None)
 pandas.set_option('display.width', None)
-pandas.set_option('display.max_colwidth', -1)
+# pandas.set_option('display.max_colwidth', -1)
 
 
 class DataTransformator:
@@ -98,35 +98,18 @@ X_train, X_test, y_train, y_test = train_test_split(d_train.dataset, d_train.dat
 X_train.drop(target, axis=1, inplace=True)
 X_test.drop(target, axis=1, inplace=True)
 
-# Grid search for hyperparameters tuning
-# param_grid = {'n_estimators': [10, 30, 60, 100, 150],
-#               'learning_rate': [0.1, 0.05, 0.02, 0.01],
-#               'max_depth': [2, 4, 6, 8, 10],
-#               'min_samples_leaf': [3, 5, 9, 17],
-#               'max_features': [1.0, 0.3, 0.7]
-#               }
-
-# model = GradientBoostingRegressor()
-# grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=3, n_jobs=-1)
-# grid_search.fit(X_train, y_train)
-# print("Best params: {}".format(grid_search.best_params_))
-# Best params: {'learning_rate': 0.1, 'max_depth': 4, 'max_features': 0.3, 'min_samples_leaf': 9, 'n_estimators': 100}
-#
-# best_params = {'learning_rate': 0.1, 'max_depth': 4, 'max_features': 0.3, 'min_samples_leaf': 9, 'n_estimators': 100}
-# model = GradientBoostingRegressor(**best_params)
 # model = XGBRegressor()
 # parameters = {'nthread': [4],
-#               'objective': ['reg:linear'],
 #               'learning_rate': [.03, 0.05, .07],
-#               'max_depth': [5, 6, 7],
-#               'min_child_weight': [4],
+#               'max_depth': [1, 3, 5, 7, 9],
+#               'min_child_weight': [2, 4, 6],
 #               'silent': [1],
-#               'subsample': [0.7],
-#               'colsample_bytree': [0.7],
-#               'n_estimators': [100, 200, 300, 400, 500]}
+#               'subsample': [0.5, 0.7],
+#               'colsample_bytree': [0.5, 0.7],
+#               'n_estimators': [100]}
 # xgb_grid = GridSearchCV(model,
 #                         parameters,
-#                         cv=2,
+#                         cv=5,
 #                         n_jobs=4,
 #                         verbose=True)
 #
@@ -135,8 +118,12 @@ X_test.drop(target, axis=1, inplace=True)
 #
 # print(xgb_grid.best_score_)
 # print(xgb_grid.best_params_)
-best_ = {'colsample_bytree': 0.7, 'learning_rate': 0.03, 'max_depth': 5, 'min_child_weight': 4, 'n_estimators': 500, 'nthread': 4, 'objective': 'reg:linear', 'silent': 1, 'subsample': 0.7}
-model = XGBRegressor(**best_)
+
+#
+best_params = {'colsample_bytree': 0.7, 'learning_rate': 0.05, 'max_depth': 9, 'min_child_weight': 6, 'n_estimators': 100, 'nthread': 4, 'silent': 1, 'subsample': 0.5}
+
+
+model = XGBRegressor(**best_params)
 # Fit and score
 model.fit(X_train, y_train)
 score = model.score(X_test, y_test)
