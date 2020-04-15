@@ -9,30 +9,15 @@ from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 from sklearn.metrics import mean_absolute_error
 from sklearn.compose import ColumnTransformer
 
+
 pandas.set_option('display.max_rows', None)
 pandas.set_option('display.max_columns', None)
 pandas.set_option('display.width', None)
-pandas.set_option('display.max_colwidth', -1)
+pandas.set_option('display.max_colwidth', None)
 
 # Load training data
 train_data = pandas.read_csv('data/train.csv')
 target = 'SalePrice'
-
-#
-# # Change to categories
-# # Fill rest of NaNs
-# for feature in train_data:
-#     if train_data[feature].dtype == np.object:
-#         train_data[feature].fillna(train_data[feature].mode()[0], inplace=True)
-#         train_data[feature] = train_data[feature].astype('category')
-#         train_data[feature] = train_data[feature].cat.codes
-#     else:
-#         if feature == 'GarageYtBlt':
-#             train_data[feature].fillna(train_data[feature].min(), inplace=True)
-#         else:
-#             train_data[feature].fillna(train_data[feature].median(), inplace=True)
-
-# train_data.drop('LotShape', inplace=True, axis=1)
 
 # Split training set
 X_train, X_test, y_train, y_test = train_test_split(train_data, train_data[target], random_state=np.random)
@@ -41,9 +26,9 @@ X_train, X_test, y_train, y_test = train_test_split(train_data, train_data[targe
 X_train.drop(target, axis=1, inplace=True)
 X_test.drop(target, axis=1, inplace=True)
 
+best_params = {'colsample_bytree': 0.7, 'learning_rate': 0.05, 'max_depth': 5, 'min_child_weight': 2,
+               'n_estimators': 120, 'nthread': 4, 'silent': 1, 'subsample': 0.5}
 
-best_params = {'colsample_bytree': 0.7, 'learning_rate': 0.05, 'max_depth': 9, 'min_child_weight': 6,
-               'n_estimators': 100, 'nthread': 4, 'silent': 1, 'subsample': 0.5}
 model = XGBRegressor(**best_params)
 
 notavailable_transformer = Pipeline(steps=[
@@ -80,23 +65,40 @@ preprocessor = ColumnTransformer(
                                    'FireplaceQu', 'GarageType', 'GarageFinish', 'GarageQual', 'GarageCond']),
         ('oth', other_obj, object_cols),
         ('med2', median_transformer, num_cols),
+
     ], remainder='drop')
 
 pipe = Pipeline(steps=[
     ('prep', preprocessor),
     ('model', model)
 ])
+#
+# # Fit and score
+# score = 0
+# mae = 0
+# tries = 50
+# for i in range(0, tries):
+#     pipe.fit(X_train, y_train)
+#     score += pipe.score(X_test, y_test)
+#     preds_test = pipe.predict(X_test)
+#     mae += mean_absolute_error(y_test, preds_test)
+# print("Score: {}".format(score/tries))
+# print("MAE: {}".format(mae/tries))
+# raise RuntimeError
 
-# Fit and score
 pipe.fit(X_train, y_train)
+
 score = pipe.score(X_test, y_test)
-print("Score: {}".format(score))
 preds_test = pipe.predict(X_test)
-print("MAE: {}".format(mean_absolute_error(y_test, preds_test)))
+mae = mean_absolute_error(y_test, preds_test)
+print("Score: {}".format(score))
+print("MAE: {}".format(mae))
+
 
 # Test data predictions
 test_data = pandas.read_csv('data/test.csv')
 
+# Predict
 preds = pipe.predict(test_data)
 
 # Store to CSV file
