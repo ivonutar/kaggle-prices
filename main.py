@@ -9,18 +9,25 @@ from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 from sklearn.metrics import mean_absolute_error
 from sklearn.compose import ColumnTransformer
 
-
 pandas.set_option('display.max_rows', None)
 pandas.set_option('display.max_columns', None)
 pandas.set_option('display.width', None)
 pandas.set_option('display.max_colwidth', None)
 
 # Load training data
-train_data = pandas.read_csv('data/train.csv')
+train = pandas.read_csv('data/train.csv')
 target = 'SalePrice'
 
+# Drop outliers
+train = train.drop(train[(train['GrLivArea'] > 4000)
+                         & (train['SalePrice'] < 300000)].index).reset_index(drop=True)
+train = train.drop(train[(train['GarageCars'] > 3)
+                         & (train['SalePrice'] < 300000)].index).reset_index(drop=True)
+train = train.drop(train[(train['GarageArea'] > 1000)
+                         & (train['SalePrice'] < 300000)].index).reset_index(drop=True)
+
 # Split training set
-X_train, X_test, y_train, y_test = train_test_split(train_data, train_data[target], random_state=np.random)
+X_train, X_test, y_train, y_test = train_test_split(train, train[target], random_state=np.random)
 
 # Drop target feature
 X_train.drop(target, axis=1, inplace=True)
@@ -93,7 +100,6 @@ preds_test = pipe.predict(X_test)
 mae = mean_absolute_error(y_test, preds_test)
 print("Score: {}".format(score))
 print("MAE: {}".format(mae))
-
 
 # Test data predictions
 test_data = pandas.read_csv('data/test.csv')
