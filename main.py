@@ -33,8 +33,14 @@ X_train, X_test, y_train, y_test = train_test_split(train, train[target], random
 X_train.drop(target, axis=1, inplace=True)
 X_test.drop(target, axis=1, inplace=True)
 
-best_params = {'colsample_bytree': 0.7, 'learning_rate': 0.05, 'max_depth': 5, 'min_child_weight': 2,
-               'n_estimators': 120, 'nthread': 4, 'silent': 1, 'subsample': 0.5}
+best_params = {'colsample_bytree': 0.7,
+               'learning_rate': 0.05,
+               'max_depth': 9,
+               'min_child_weight': 6,
+               'n_estimators': 100,
+               'nthread': 4,
+               'silent': 1,
+               'subsample': 0.5}
 
 model = XGBRegressor(**best_params)
 
